@@ -1,3 +1,4 @@
+import 'ana_menu.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'dart:async';
@@ -15,13 +16,14 @@ class SarjInadiApp extends StatelessWidget {
       title: 'Şarj İnadı',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
-      home: const OyunEkrani(),
+      home: const AnaMenu(enYuksekSkor: 0),
     );
   }
 }
 
 class OyunEkrani extends StatefulWidget {
-  const OyunEkrani({super.key});
+  final Zorluk zorluk;
+  const OyunEkrani({super.key, required this.zorluk});
 
   @override
   State<OyunEkrani> createState() => _OyunEkraniState();
@@ -1083,6 +1085,534 @@ class _BombaImhaMinigameState extends State<BombaImhaMinigame> {
   }
 }
 
+// ===== EMOJİ EŞLEŞTİR MİNİGAME =====
+class EmojiEslestirMinigame extends StatefulWidget {
+  final Function(bool basarili) onBitis;
+  const EmojiEslestirMinigame({super.key, required this.onBitis});
+
+  @override
+  State<EmojiEslestirMinigame> createState() => _EmojiEslestirMinigameState();
+}
+
+class _EmojiEslestirMinigameState extends State<EmojiEslestirMinigame> {
+  final List<String> emojiler = ['🔋', '⚡', '🔌', '💡', '🔦', '🖥️'];
+  late List<String> kartlar;
+  List<bool> acik = List.filled(12, false);
+  List<bool> eslesti = List.filled(12, false);
+  int? ilkSecilen;
+  bool kontrol = false;
+  int eslesenCift = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    kartlar = [...emojiler, ...emojiler]..shuffle();
+  }
+
+  void kartaTikla(int i) async {
+    if (kontrol || acik[i] || eslesti[i]) return;
+    setState(() => acik[i] = true);
+    if (ilkSecilen == null) {
+      ilkSecilen = i;
+    } else {
+      kontrol = true;
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (kartlar[ilkSecilen!] == kartlar[i]) {
+        setState(() {
+          eslesti[ilkSecilen!] = true;
+          eslesti[i] = true;
+          eslesenCift++;
+        });
+        if (eslesenCift == 6) widget.onBitis(true);
+      } else {
+        setState(() {
+          acik[ilkSecilen!] = false;
+          acik[i] = false;
+        });
+      }
+      ilkSecilen = null;
+      kontrol = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black87,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.yellow.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text('⚡ MİNİGAME', style: TextStyle(color: Colors.yellow, fontSize: 13, letterSpacing: 3)),
+            ),
+            const SizedBox(height: 16),
+            const Text('Emojileri Eşleştir!', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            Text('$eslesenCift/6 eşleşti', style: const TextStyle(color: Colors.white54, fontSize: 16)),
+            const SizedBox(height: 20),
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 4,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              children: List.generate(12, (i) {
+                return GestureDetector(
+                  onTap: () => kartaTikla(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    decoration: BoxDecoration(
+                      color: eslesti[i]
+                          ? Colors.green.withValues(alpha: 0.3)
+                          : acik[i] ? const Color(0xFF1A1A2E) : Colors.blue.shade900,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: eslesti[i] ? Colors.green : Colors.white24),
+                    ),
+                    child: Center(
+                      child: Text(acik[i] || eslesti[i] ? kartlar[i] : '❓',
+                          style: const TextStyle(fontSize: 24)),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===== GELİŞMİŞ MATEMATİK MİNİGAME =====
+class GelistirilmisMatematikMinigame extends StatefulWidget {
+  final Function(bool basarili) onBitis;
+  const GelistirilmisMatematikMinigame({super.key, required this.onBitis});
+
+  @override
+  State<GelistirilmisMatematikMinigame> createState() => _GelistirilmisMatematikMinigameState();
+}
+
+class _GelistirilmisMatematikMinigameState extends State<GelistirilmisMatematikMinigame> {
+  late int sayi1, sayi2, dogruCevap;
+  late String islem;
+  late List<int> secenekler;
+  bool bitti = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final islemler = ['+', '-', '×', '÷'];
+    islem = islemler[Random().nextInt(4)];
+
+    switch (islem) {
+      case '+':
+        sayi1 = Random().nextInt(50) + 1;
+        sayi2 = Random().nextInt(50) + 1;
+        dogruCevap = sayi1 + sayi2;
+        break;
+      case '-':
+        sayi1 = Random().nextInt(50) + 20;
+        sayi2 = Random().nextInt(20) + 1;
+        dogruCevap = sayi1 - sayi2;
+        break;
+      case '×':
+        sayi1 = Random().nextInt(10) + 1;
+        sayi2 = Random().nextInt(10) + 1;
+        dogruCevap = sayi1 * sayi2;
+        break;
+      case '÷':
+        sayi2 = Random().nextInt(9) + 1;
+        dogruCevap = Random().nextInt(10) + 1;
+        sayi1 = sayi2 * dogruCevap;
+        break;
+      default:
+        sayi1 = sayi2 = dogruCevap = 1;
+    }
+
+    secenekler = [dogruCevap];
+    while (secenekler.length < 4) {
+      int yanlis = dogruCevap + Random().nextInt(20) - 10;
+      if (!secenekler.contains(yanlis) && yanlis > 0) {
+        secenekler.add(yanlis);
+      }
+    }
+    secenekler.shuffle();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black87,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.yellow.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text('⚡ MİNİGAME', style: TextStyle(color: Colors.yellow, fontSize: 13, letterSpacing: 3)),
+            ),
+            const SizedBox(height: 16),
+            const Text('Hızlı Matematik!', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            Text('$sayi1 $islem $sayi2 = ?',
+                style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 40),
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              children: secenekler.map((s) {
+                return GestureDetector(
+                  onTap: bitti ? null : () {
+                    setState(() => bitti = true);
+                    Future.delayed(const Duration(milliseconds: 600), () => widget.onBitis(s == dogruCevap));
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1A2E),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.blue.withValues(alpha: 0.5)),
+                    ),
+                    child: Center(
+                      child: Text('$s', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===== RENK STROOP MİNİGAME =====
+class RenkStroopMinigame extends StatefulWidget {
+  final Function(bool basarili) onBitis;
+  const RenkStroopMinigame({super.key, required this.onBitis});
+
+  @override
+  State<RenkStroopMinigame> createState() => _RenkStroopMinigameState();
+}
+
+class _RenkStroopMinigameState extends State<RenkStroopMinigame> {
+  final List<Map<String, dynamic>> renkler = [
+    {'isim': 'KIRMIZI', 'renk': Colors.red},
+    {'isim': 'MAVİ', 'renk': Colors.blue},
+    {'isim': 'YEŞİL', 'renk': Colors.green},
+    {'isim': 'SARI', 'renk': Colors.yellow},
+    {'isim': 'MOR', 'renk': Colors.purple},
+  ];
+
+  late String yaziIsim;
+  late Color yaziRenk;
+  late Color dogruRenk;
+  late String dogruIsim;
+  bool bitti = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final r1 = renkler[Random().nextInt(renkler.length)];
+    final r2 = renkler[Random().nextInt(renkler.length)];
+    yaziIsim = r1['isim'];
+    yaziRenk = r2['renk'];
+    dogruRenk = r2['renk'];
+    dogruIsim = r2['isim'];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black87,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.yellow.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text('⚡ MİNİGAME', style: TextStyle(color: Colors.yellow, fontSize: 13, letterSpacing: 3)),
+            ),
+            const SizedBox(height: 16),
+            const Text('Renk Stroop!', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('Yazının RENGİ hangisi?', style: TextStyle(color: Colors.white54, fontSize: 16)),
+            const SizedBox(height: 30),
+            Text(yaziIsim,
+                style: TextStyle(color: yaziRenk, fontSize: 64, fontWeight: FontWeight.bold,
+                    shadows: [const Shadow(color: Colors.black, blurRadius: 10)])),
+            const SizedBox(height: 40),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: renkler.map((r) {
+                return GestureDetector(
+                  onTap: bitti ? null : () {
+                    setState(() => bitti = true);
+                    Future.delayed(const Duration(milliseconds: 500),
+                        () => widget.onBitis(r['renk'] == dogruRenk));
+                  },
+                  child: Container(
+                    width: 100, height: 50,
+                    decoration: BoxDecoration(
+                      color: r['renk'],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(r['isim'],
+                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold,
+                              shadows: [Shadow(color: Colors.black, blurRadius: 5)])),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===== LABİRENT MİNİGAME =====
+class LabirentMinigame extends StatefulWidget {
+  final Function(bool basarili) onBitis;
+  const LabirentMinigame({super.key, required this.onBitis});
+
+  @override
+  State<LabirentMinigame> createState() => _LabirentMinigameState();
+}
+
+class _LabirentMinigameState extends State<LabirentMinigame> {
+  double topX = 0.1;
+  double topY = 0.1;
+  bool bitti = false;
+  int sure = 15;
+  Timer? sureTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    sureTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      setState(() => sure--);
+      if (sure <= 0) {
+        bitti = true;
+        sureTimer?.cancel();
+        widget.onBitis(false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    sureTimer?.cancel();
+    super.dispose();
+  }
+
+  bool kazandi() => topX > 0.8 && topY > 0.8;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black87,
+      child: Column(
+        children: [
+          const SizedBox(height: 60),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.yellow.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text('⚡ MİNİGAME', style: TextStyle(color: Colors.yellow, fontSize: 13, letterSpacing: 3)),
+          ),
+          const SizedBox(height: 12),
+          const Text('Labirent!', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+          Text('$sure saniye — Topu çıkışa götür!',
+              style: TextStyle(color: sure <= 5 ? Colors.red : Colors.white54, fontSize: 14)),
+          Expanded(
+            child: GestureDetector(
+              onPanUpdate: (d) {
+                if (bitti) return;
+                setState(() {
+                  topX = (topX + d.delta.dx / 300).clamp(0.05, 0.95);
+                  topY = (topY + d.delta.dy / 300).clamp(0.05, 0.95);
+                  if (kazandi()) {
+                    bitti = true;
+                    sureTimer?.cancel();
+                    widget.onBitis(true);
+                  }
+                });
+              },
+              child: LayoutBuilder(builder: (context, constraints) {
+                return Stack(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white24, width: 2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    // Çıkış noktası
+                    Positioned(
+                      right: 24,
+                      bottom: 24,
+                      child: Container(
+                        width: 40, height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green, width: 2),
+                        ),
+                        child: const Center(child: Text('🚪', style: TextStyle(fontSize: 20))),
+                      ),
+                    ),
+                    // Top
+                    Positioned(
+                      left: topX * constraints.maxWidth - 16,
+                      top: topY * constraints.maxHeight - 16,
+                      child: Container(
+                        width: 32, height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                          boxShadow: [BoxShadow(color: Colors.orange.withValues(alpha: 0.5), blurRadius: 10)],
+                        ),
+                        child: const Center(child: Text('🔋', style: TextStyle(fontSize: 16))),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+}
+
+// ===== PARMAK İZİ MİNİGAME =====
+class ParmakIziMinigame extends StatefulWidget {
+  final Function(bool basarili) onBitis;
+  const ParmakIziMinigame({super.key, required this.onBitis});
+
+  @override
+  State<ParmakIziMinigame> createState() => _ParmakIziMinigameState();
+}
+
+class _ParmakIziMinigameState extends State<ParmakIziMinigame> {
+  final List<List<int>> desenler = [
+    [0, 1, 2, 5, 8, 7, 6],
+    [0, 1, 2, 3, 4],
+    [2, 1, 0, 3, 6, 7, 8],
+    [0, 4, 8],
+  ];
+
+  late List<int> dogruDesen;
+  List<int> kullaniciDesen = [];
+  bool bitti = false;
+
+  @override
+  void initState() {
+    super.initState();
+    dogruDesen = desenler[Random().nextInt(desenler.length)];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.black87,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.yellow.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text('⚡ MİNİGAME', style: TextStyle(color: Colors.yellow, fontSize: 13, letterSpacing: 3)),
+            ),
+            const SizedBox(height: 16),
+            const Text('Parmak İzini Tara!', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text('Deseni çiz: ${dogruDesen.join(" → ")}',
+                style: const TextStyle(color: Colors.cyan, fontSize: 16)),
+            const SizedBox(height: 30),
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 3,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              padding: const EdgeInsets.symmetric(horizontal: 60),
+              children: List.generate(9, (i) {
+                bool secildi = kullaniciDesen.contains(i);
+                int sira = kullaniciDesen.indexOf(i);
+                return GestureDetector(
+                  onTap: bitti ? null : () {
+                    if (secildi) return;
+                    setState(() {
+                      kullaniciDesen.add(i);
+                      if (kullaniciDesen.length == dogruDesen.length) {
+                        bitti = true;
+                        bool dogru = kullaniciDesen.toString() == dogruDesen.toString();
+                        Future.delayed(const Duration(milliseconds: 500), () => widget.onBitis(dogru));
+                      }
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    decoration: BoxDecoration(
+                      color: secildi ? Colors.cyan.withValues(alpha: 0.3) : const Color(0xFF1A1A2E),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: secildi ? Colors.cyan : Colors.white24, width: 2),
+                    ),
+                    child: Center(
+                      child: Text(
+                        secildi ? '${sira + 1}' : '${i + 1}',
+                        style: TextStyle(
+                            color: secildi ? Colors.cyan : Colors.white38,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => setState(() => kullaniciDesen = []),
+              child: const Text('Temizle', style: TextStyle(color: Colors.white38)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _PilKacagiMinigameState extends State<PilKacagiMinigame> {
   late int dogruIndex;
   List<bool> tiklanmis = List.filled(9, false);
@@ -1257,6 +1787,21 @@ class _KabloPrizMinigameState extends State<KabloPrizMinigame> {
 }
 
 class _OyunEkraniState extends State<OyunEkrani> {
+  int comboSayac = 0;
+double comboCarpan = 1.0;
+Timer? comboSifirlamaTimer;
+  // Para sistemi
+int para = 0;
+int minigamePara = 0; // minigameden kazanılan
+
+// Market öğeleri
+int autoclickerSeviye = 0; // 0 = yok
+double kabloCarpan = 1.0; // her tıkta çarpan
+double dususYavaslama = 1.0; // düşüş hızı çarpanı
+bool minigameKalkan = false;
+
+// Autoclicker timer
+Timer? autoclickerTimer;
   double sarj = 100.0;
   bool cooldownAktif = false;
   int skor = 0;
@@ -1281,19 +1826,42 @@ class _OyunEkraniState extends State<OyunEkrani> {
     if (basarili) {
       sarj += 20;
       if (sarj > 100) sarj = 100;
+      // Minigame kazanınca 10 para
+      para += 10;
+      minigamePara += 10;
     } else {
-      sarj -= 10;
-      if (sarj < 0) sarj = 0;
+      if (!minigameKalkan) {
+        sarj -= 10;
+        if (sarj < 0) sarj = 0;
+      }
     }
   });
 }
 
   void oyunuBaslat() {
+    // Zorluka göre ayarlar
+double sarjDususu = 0.4;
+int minigameAralik = 15;
+
+switch (widget.zorluk) {
+  case Zorluk.kolay:
+    sarjDususu = 0.2;
+    minigameAralik = 25;
+    break;
+  case Zorluk.orta:
+    sarjDususu = 0.4;
+    minigameAralik = 15;
+    break;
+  case Zorluk.zor:
+    sarjDususu = 0.7;
+    minigameAralik = 8;
+    break;
+}
     sarjTimer = Timer.periodic(
       const Duration(milliseconds: 100),
       (timer) {
         setState(() {
-          sarj -= 0.1;
+          sarj -= sarjDususu * dususYavaslama;
 
           if (sarj <= 0) {
             sarj = 0;
@@ -1308,6 +1876,8 @@ class _OyunEkraniState extends State<OyunEkrani> {
     skorTimer = Timer.periodic(
       const Duration(seconds: 1),
       (timer) {
+        // Her saniye skor kadar para kazan
+para += 1;
         setState(() => skor++);
       },
     );
@@ -1316,15 +1886,15 @@ class _OyunEkraniState extends State<OyunEkrani> {
   minigameTimer = Timer.periodic(
   const Duration(seconds: 1),
   (timer) {
-    if (sarj < 50 && !minigameAktif && !oyunBitti) {
+    if (sarj <= 100 && !minigameAktif && !oyunBitti) {
       // %5 ihtimalle her saniye minigame açılır
       // Skor arttıkça ihtimal artar
 // Başta 1/20, 60 skorda 1/10, 120 skorda 1/5
-int aralik = (20 - (skor / 10).floor()).clamp(5, 20);
+int aralik = (minigameAralik - (skor / 10).floor()).clamp(5, minigameAralik);
 if (Random().nextInt(aralik) == 0) {
         setState(() {
   minigameAktif = true;
-  aktifMinigame = Random().nextInt(11);
+  aktifMinigame = Random().nextInt(16);
 });
       }
     }
@@ -1334,13 +1904,33 @@ if (Random().nextInt(aralik) == 0) {
 
   void kabloIttir() {
   if (oyunBitti || cooldownAktif) return;
+
+  // Combo artır
+  comboSifirlamaTimer?.cancel();
+  comboSayac++;
+
+  // Her 5 tıkta combo çarpanı artar
+  if (comboSayac >= 20) comboCarpan = 3.0;
+  else if (comboSayac >= 10) comboCarpan = 2.0;
+  else if (comboSayac >= 5) comboCarpan = 1.5;
+  else comboCarpan = 1.0;
+
+  // 2 saniye tıklamazsan combo sıfırlanır
+  comboSifirlamaTimer = Timer(const Duration(seconds: 2), () {
+    setState(() {
+      comboSayac = 0;
+      comboCarpan = 1.0;
+    });
+  });
+
   setState(() {
     cooldownAktif = true;
     kabloAnimasyonAktif = true;
-    sarj += 1.5;
+    sarj += 1.5 * comboCarpan * kabloCarpan;
     if (sarj > 100.0) sarj = 100.0;
   });
-  Future.delayed(const Duration(milliseconds: 500), () {
+
+  Future.delayed(const Duration(milliseconds: 300), () {
     if (mounted) setState(() {
       kabloAnimasyonAktif = false;
       cooldownAktif = false;
@@ -1386,14 +1976,40 @@ if (Random().nextInt(aralik) == 0) {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text('SKOR: $skor',
-                      style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2)),
-                ),
+  padding: const EdgeInsets.all(20),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      IconButton(
+        onPressed: () {
+          sarjTimer?.cancel();
+          skorTimer?.cancel();
+          minigameTimer?.cancel();
+          autoclickerTimer?.cancel();
+          Navigator.pop(context);
+        },
+        icon: const Icon(Icons.home, color: Colors.white54, size: 28),
+      ),
+      Column(
+        children: [
+          Text('SKOR: $skor',
+              style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2)),
+          if (comboSayac >= 5)
+            Text('🔥 COMBO x${comboCarpan.toStringAsFixed(1)}',
+                style: TextStyle(
+                    color: comboCarpan >= 3 ? Colors.red : comboCarpan >= 2 ? Colors.orange : Colors.yellow,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold)),
+        ],
+      ),
+      const SizedBox(width: 48),
+    ],
+  ),
+),
 
                 const Spacer(),
 
@@ -1570,7 +2186,7 @@ if (Random().nextInt(aralik) == 0) {
         ),
 
         // Minigame üste açılır
-        if (minigameAktif)
+       if (minigameAktif)
   [
     KabloPrizMinigame(onBitis: minigameBitis),
     MatematikMinigame(onBitis: minigameBitis),
@@ -1584,6 +2200,11 @@ if (Random().nextInt(aralik) == 0) {
     SayiSiralaMinigame(onBitis: minigameBitis),
     HafizaMinigame(onBitis: minigameBitis),
     BombaImhaMinigame(onBitis: minigameBitis),
+    EmojiEslestirMinigame(onBitis: minigameBitis),
+    GelistirilmisMatematikMinigame(onBitis: minigameBitis),
+    RenkStroopMinigame(onBitis: minigameBitis),
+    LabirentMinigame(onBitis: minigameBitis),
+    ParmakIziMinigame(onBitis: minigameBitis),
   ][aktifMinigame],
       ],
     );
